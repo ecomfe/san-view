@@ -1,0 +1,19 @@
+<div class="todo-form">
+    <div class="todo-form-row">
+        <input value="{{:todo.title}}" placeholder="标题">
+        <san-calendar value="{{:todo.dueDate}}"></san-calendar>
+    </div>
+    <div class="todo-form-row">
+        <textarea value="{{:todo.content}}" placeholder="内容（支持markdown）"></textarea>
+    </div>
+    <div class="todo-form-row">
+        <button type="button" class="todo-form-action" on-click="cancel">
+            <i class="ui-icon ui-icon-times"></i>
+            取消
+        </button>
+        <button type="button" class="todo-form-action" on-click="submit">
+            <i class="ui-icon ui-icon-save"></i>
+            保存
+        </button>
+    </div>
+</div>

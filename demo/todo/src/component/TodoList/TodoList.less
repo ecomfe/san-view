@@ -1,0 +1,39 @@
+.ui-todo-list {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: stretch;
+    justify-content: space-between;
+}
+
+.ui-todo-list-create-todo {
+    display: block;
+    width: 400px;
+    height: 265px;
+    margin-bottom: 20px;
+    // box-shadow: 0 2px 5px 0 rgba(0, 0, 0, .12);
+    background-color: #fff;
+    position: relative;
+
+    .ui-icon {
+        font-size: 80px;
+        width: 140px;
+        height: 140px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin: -70px 0 0 -70px;
+        border-radius: 50%;
+        background-color: #de236c;
+        color: #fff;
+        line-height: 140px;
+        vertical-align: middle;
+    }
+
+    &:hover {
+        background-color: #fff;
+
+        .ui-icon {
+            background-color: lighten(#de236c, 10%);
+        }
+    }
+}

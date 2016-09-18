@@ -1,0 +1,29 @@
+<div class="todo-card">
+    <header class="todo-card-header">
+        <h3 class="todo-card-title">{{title}}</h3>
+        <time san-if="dueDate" class="todo-card-due-date">截止：{{dueDate | date}}</time>
+    </header>
+    <div class="todo-card-content">{{todo.content | markdown}}</div>
+    <footer class="todo-card-footer">
+        {{if: completed}}
+        <span class="todo-card-hint">已完成</span>
+        {{else:}}
+        <button class="todo-card-action" type="button" on-click="markComplete">
+            <i class="ui-icon ui-icon-check"></i>
+            完成
+        </button>
+        <button class="todo-card-action" type="butto" on-click="edit">
+            <i class="ui-icon ui-icon-edit"></i>
+            编辑
+        </button>
+        {{/if}}
+        <button class="todo-card-action" type="butto" on-click="remove">
+            <i class="ui-icon ui-icon-trash"></i>
+            删除
+        </button>
+    </footer>
+
+    <san-dialog san-if="{{editingTodo}}" title="编辑待办事项">
+        <san-todo-form todo="{{:editingTodo}}" on-submit="updateTodo" on-cancel="cancelEdit"></san-todo-form>
+    </san-dialog>
+</div>

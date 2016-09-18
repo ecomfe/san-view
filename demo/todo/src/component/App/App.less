@@ -1,0 +1,62 @@
+@dep-path: "../../../dep";
+
+// eicons
+@import "@{dep-path}/eicons/src/main.less";
+@import "@{dep-path}/eicons/src/icon-utils.less";
+
+// 设置font文件地址
+@eicons-font-path: "@{dep-path}/eicons/fonts";
+
+// est
+@import "@{dep-path}/est/src/all.less";
+
+.global-normalize();
+
+// esf
+@import "@{dep-path}/esf/theme/standard/main.less";
+
+.esui-loader-bouncers();
+
+// esui
+@import "@{dep-path}/esui/theme/standard/Main.less";
+
+.ui-app {
+    display: block;
+    font-size: 14px;
+    margin: 20px;
+}
+
+.ui-app-header {
+    overflow: hidden;
+    padding-bottom: 20px;
+}
+
+.ui-app-title {
+    float: left;
+    margin: 0;
+}
+
+.ui-app-action {
+    float: right;
+    font-size: 17px;
+    background-color: #de236c;
+    color: #fff;
+
+    &:hover {
+        background-color: lighten(#de236c, 10%);
+        color: #fff;
+    }
+}
+
+.sticky {
+    width: 100%;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+    background-color: rgba(53, 64, 81, .8);
+    padding: 10px 20px;
+
+    h1 {
+        color: #fff;
+    }
+}

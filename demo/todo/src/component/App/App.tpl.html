@@ -1,0 +1,10 @@
+<!-- :main -->
+<header be-sticky class="header">
+    <h1 class="title">待办事项</h1>
+    <button type="button" class="create-todo" on-click="createTodo"><i class="ui-icon ui-icon-plus"></i></button>
+</header>
+<esui-todo-list todos="{{todos}}"></esui-todo-list>
+
+<san-dialog san-if="createNew" title="新建待办事项">
+    <san-todo-form todo="{{:newTodo}}" on-submit="addTodo" on-cancel="cancelCreate"></san-todo-form>
+</san-dialog>

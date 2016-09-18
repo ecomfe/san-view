@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Todo</title>
+    <script src="src/external/babel-support.js"></script>
+    <script src="src/external/esl.js"></script>
+    <script>
+        require.config({/* ... */});
+    </script>
+</head>
+<body>
+    <div id="page">
+        <san-app></san-app>
+    </div>
+    <script>
+        require(
+            ['san-view', 'component/App']
+            function (view, App) {
+                view.render(App, document.getElementById('page'));
+            }
+        );
+    </script>
+</body>
+</html>
