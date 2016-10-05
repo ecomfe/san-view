@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Hello World</title>
+    <script src="esl.js"></script>
+    <script>
+        require.config({
+            waitSeconds: 1,
+            baseUrl: '.',
+            packages: [
+                {
+                    name: 'san-view',
+                    location: '../../src'
+                },
+                {
+                    name: 'san-update',
+                    location: '../../node_modules/san-update',
+                    main: 'index'
+                }
+            ]
+        });
+    </script>
+</head>
+<body>
+    <div id="page"></div>
+    <script>
+        require(['main'], function () {});
+    </script>
+</body>
+</html>
