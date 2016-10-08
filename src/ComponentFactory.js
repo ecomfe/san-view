@@ -1,4 +1,5 @@
 import HTMLElementComponent from './HTMLElementComponent';
+import ForDirective from './ForDirective';
 
 export default class ComponentFactory {
     constructor(owner) {
@@ -6,9 +7,7 @@ export default class ComponentFactory {
     }
 
     fromANode(node) {
-        let component = node.type === 'element'
-            ? this.createHTMLElementComponent(node)
-            : this.fromTagName(node.tagName);
+        let component = createComponentFromNode(node);
         component.nodeContext = node;
         component.owner = this.owner;
 
@@ -19,14 +18,15 @@ export default class ComponentFactory {
         return component;
     }
 
-    createHTMLElementComponent(node) {
-        let component = new HTMLElementComponent();
-
-        return component;
-    }
-
-    fromTagName(tagName) {
-        let ComponentType = this.owner.components[tagName];
-        return new ComponentType();
+    createComponentFromNode(node) {
+        switch (node.type) {
+            case 'element':
+                return new HTMLElementComponent();
+            case 'for':
+                return new ForDirective();
+            default:
+                let ComponentType = this.owner.components[tagName];
+                return new ComponentType();
+        }
     }
 }

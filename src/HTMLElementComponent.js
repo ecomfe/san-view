@@ -1,4 +1,4 @@
-import {merge} from 'san-update';
+import ComponentBase from './ComponentBase';
 
 let uid = do {
     let c = 1;
@@ -7,10 +7,7 @@ let uid = do {
 
 let isEmpty = o => Object.keys(o) === 0;
 
-export default class HTMLElementComponent {
-    children = [];
-
-    data = {};
+export default class HTMLElementComponent extends ComponentBase {
 
     toHTML() {
         this.createStructure();
@@ -37,9 +34,7 @@ export default class HTMLElementComponent {
             }
         }
 
-        for (let child of this.children) {
-            child.reviveAsCreated(); // 从文档中找回自己的元素并处理事件等关系
-        }
+        super.reviveAsCreated();
     }
 
     /**
@@ -62,43 +57,21 @@ export default class HTMLElementComponent {
     }
 
     setData(partialData) {
-        // this.validateDataType(partialData);
-
-        // 找到实际不一样的这部分
-        let patch = Object.entries(partialData)
-            .filter(([key, value]) => this.data[key] !== value)
-            .reduce((result, [key, value]) => Object.assign(result, {[key]: value}), {});
-
-        // 如果没有变化的，提前退出
-        if (isEmpty(patch)) {
-            return;
-        }
-
-        this.data = merge(this.data, null, patch);
+        let result = super.setData(partialData);
 
         if (this.el) {
-            for (let [key, value] of Object.entries(patch)) {
+            for (let [key, value] of Object.entries(result.patch)) {
                 this.el[key] = value;
             }
         }
 
-        return {newData: this.data, patch: patch};
+        return result;
     }
 
-    updateScope(newScope, patch = newScope) {
-        let affectedBindings = this.nodeContext.binds.filter(bind => bind.dependencies.some(key => patch.hasOwnProperty(key)));
-
-        if (!affectedBindings.length) {
-            return;
+    dispose() {
+        super.dispose();
+        if (this.el) {
+            this.el.remove();
         }
-
-        let dataPatch = affectedBindings.reduce(
-            (patch, bind) => {
-                let value = newScope[bind.dependencies[0]];
-                return Object.assign(patch, {[bind.name]: value});
-            },
-            {}
-        );
-        this.setData(dataPatch);
     }
 }

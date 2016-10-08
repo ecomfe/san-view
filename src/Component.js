@@ -1,6 +1,7 @@
 // import {scheduleRender} from './scheduler';
-import {defaults, merge} from 'san-update';
+import ComponentBase from './ComponentBase';
 import ComponentFactory from './ComponentFactory';
+import uid from './uid';
 
 // // 需要知道一个节点的类型，这里返回component、for、text、element等字符串
 // let getNodeType = node => {
@@ -10,7 +11,8 @@ import ComponentFactory from './ComponentFactory';
 let isEmpty = o => Object.keys(o) === 0;
 
 
-export default class Component {
+export default class Component extends ComponentBase {
+
     // // 模板字符串
     // static template = '';
 
@@ -22,31 +24,14 @@ export default class Component {
 
     components = {};
 
-    children = [];
-
-    downstreams = [];
+    root = null;
 
     aNode;
 
-    // 最后一次用于渲染的数据，做渲染时的脏检查用
-    previousRenderData;
-
-    data;
-
-    // 初始值
-    initData() {
-        return {};
-    }
-
     constructor(initialData) {
+        super(initialData);
+
         this.factory = new ComponentFactory(this);
-
-        let data = defaults(initialData, null, this.initData());
-        // // 校验数据格式，只在develop模式下会有
-        // this.validateDataType(data);
-
-        // 最新的数据
-        this.data = data;
 
         // 保证模板编译就一次
         if (this.constructor.aNode) {
@@ -57,112 +42,10 @@ export default class Component {
         }
     }
 
-    setData(partialData) {
-        // this.validateDataType(partialData);
-
-        // 找到实际不一样的这部分
-        let patch = Object.entries(partialData)
-            .filter(([key, value]) => this.data[key] !== value)
-            .reduce((result, [key, value]) => Object.assign(result, {[key]: value}), {});
-
-        // 如果没有变化的，提前退出
-        if (isEmpty(patch)) {
-            return;
-        }
-
-        // 保存一下上一次渲染用的数据
-        // if (!this.previousRenderData) {
-        //     this.previousRenderData = this.data;
-        // }
-
-        this.data = merge(this.data, null, patch);
-
-        // 推送到子组件
-        this.pushScopeChange(patch);
-
-        return {newData: this.data, patch: patch};
-    }
-
-    // // 内部使用的setData
-    // changeData(partialData) {
-    //     let result = this.setData(partialData);
-    //     this.notifyDataChange(result.changes);
-    //     return result;
-    // }
-
-    // notifyDataChange() {
-    //     this.onChange && this.onChange(changes);
-    //     this.fire('change', {changes});
-    // }
-
     pushScopeChange(patch) {
         this.root.updateScope(this.data, patch);
 
-        for (let component of this.downstreams) {
-            component.updateScope(this.data, patch);
-        }
-    }
-
-    updateScope(newScope, patch = newScope) {
-        let affectedBindings = this.nodeContext.binds.filter(bind => bind.dependencies.some(key => patch.hasOwnProperty(key)));
-
-        if (!affectedBindings.length) {
-            return;
-        }
-
-        let dataPatch = affectedBindings.reduce(
-            (patch, bind) => {
-                let value = newScope[bind.dependencies[0]];
-                return Object.assign(patch, {[bind.name]: value});
-            },
-            {}
-        );
-        this.setData(dataPatch);
-    }
-
-    // // 把实际的界面更新刷一下
-    // pushRender() {
-    //     let changes = Object.entries(this.data).filter(([key, value]) => this.previousRenderData[key] !== value);
-    //     let bindings = this.bindInfo
-    //         .filter(({target}) => getNodeType(target) !== 'component')
-    //         .filter(({dependencies}) => dependencies.some(dep => changes.hasOwnProperty(dep)));
-
-    //     for (let {target, property, compute} of bindings) {
-    //         let nodeType = getNodeType(target);
-    //         let value = compute(this.data);
-
-    //         switch (nodeType) {
-    //             case 'element':
-    //                 target.element[property] = value;
-    //                 break;
-    //             case 'text':
-    //                 target.node.nodeValue = value;
-    //                 break;
-    //             case 'for':
-    //                 // for怎么处理的？
-    //                 break;
-    //         }
-    //     }
-
-    //     this.previousRenderData = null;
-    // }
-
-    // // 核心方法，完全不知道怎么实现
-    // render() {
-
-    //     this.aNode = this.constructor.aNode;
-    //     this.afterCompileTemplate();
-
-    //     this.beforeRender(); // 生命周期
-    //     // ... 真正的渲染，这里应该就会建立绑定关系、父子关系等
-    //     this.afterRender(); // 生命周期
-
-    //     this.initializePropertyBindings();
-    //     this.initializeEventBindings();
-    // }
-
-    resolveContainer() {
-        return this.el || this.parent.resolveContainer();
+        super.pushScopeChange(patch);
     }
 
     toHTML() {
@@ -173,31 +56,6 @@ export default class Component {
         }
 
         throw new Error('This is not a HTMLElementComponent but do not have a root');
-    }
-
-    reviveAsCreated() {
-        // this.bindEvents();
-
-        if (this.root) {
-            this.root.reviveAsCreated();
-        }
-
-        for (let child of this.children) {
-            child.reviveAsCreated(); // 从文档中找回自己的元素并处理事件等关系
-        }
-
-        // this.callHook('created');
-    }
-
-    attach(container) {
-        let html = this.toHTML();
-
-        container.insertAdjacentHTML('beforeEnd', html);
-
-        this.reviveAsCreated();
-        this.pushScopeChange();
-
-        // this.callHook('attached');
     }
 
     /**
@@ -217,104 +75,20 @@ export default class Component {
         // this.callHook('created');
     }
 
-    /**
-     * 添加一个结构上的子组件
-     *
-     * 假设一个组件使用如下的模板：
-     *
-     * ```html
-     * <div>
-     *     <span>Hello World</span>
-     * </div>
-     * ```
-     *
-     * 编译后，`<span>`元素是`<div>`的**结构子组件**，但是是当前组件的**下游组件**
-     *
-     * @param {Component} child 子组件
-     */
-    addChild(child) {
-        this.children.push(child);
+    reviveAsCreated() {
+        if (this.root) {
+            this.root.reviveAsCreated();
+        }
+
+        super.reviveAsCreated();
     }
 
-    /**
-     * 添加一个数据上的下游组件
-     *
-     * 假设一个组件使用如下的模板：
-     *
-     * ```html
-     * <div>
-     *     <span>Hello World</span>
-     * </div>
-     * ```
-     *
-     * 编译后，`<span>`元素是`<div>`的**结构子组件**，但是是当前组件的**下游组件**
-     *
-     * @param {Component} child 下游组件
-     */
-    addDownstream(child) {
-        this.downstreams.push(child);
+    dispose() {
+        this.root.dipose();
+        super.dispose();
+
+        this.root = null;
     }
-
-    // initializePropertyBindings() {
-    //     // 只用处理双绑，单绑是在setData的数据流推送里处理的，不依赖任何事件
-    //     let dualBindings = this.bindInfo.filter(({type}) => type === 'dual');
-    //     for (let {target, property, dependencies: [sourceProperty]} of dualBindings) {
-    //         target.on(
-    //             'change',
-    //             ({changes}) => {
-    //                 if (!changes.hasOwnProperty(property)) {
-    //                     return;
-    //                 }
-
-    //                 let patch = {[sourceProperty]: changes[property]};
-    //                 this.changeData(patch); // 双向绑定等于一个事件处理，所以和事件一样是会发事件的
-    //             }
-    //         );
-    //     }
-    // }
-
-    // initializeEventBindings() {
-    //     for (let {eventName, methodName, compiledEventHandler} of this.eventBindInfo) {
-    //         let handler = async () => {
-    //             let devContext = {
-    //                 // ...这里放一堆要发给dev tool的上下文信息
-    //             };
-
-    //             let done = false;
-
-    //             let output = (name, arg) => {
-    //                 let callbackName = 'on' + pascalize(name);
-    //                 this[callbackName] && this[callbackName](arg);
-    //                 this.fire(name, arg);
-    //                 this.reportOutputToDevTool(devContext, name, arg);
-    //             };
-
-    //             let resolve = action => {
-    //                 if (done) {
-    //                     console.warn('...');
-    //                     return;
-    //                 }
-
-    //                 let patch = action(this.data);
-    //                 let {newData} = this.changeData(patch); // 会发事件的，因为是内部修改数据
-    //                 this.reportDataTransferToDevTool(devContext, newData);
-    //             };
-
-    //             let finalPatch = await compiledEventHandler.call(this, this.data, output, resolve);
-    //             let newData = this.changeData(finalPatch);
-    //             this.reportDataTransferToDevTool(devContext, newData);
-    //             done = true;
-    //         }
-    //     }
-    // }
-
-    // reportOutputToDevTool(context, name, arg) {
-    //     console.log(/* ... */);
-    // }
-
-    // reportDataTransferToDevTool(context, newData) {
-    //     console.log(/* ... */);
-    // }
 }
 
 
